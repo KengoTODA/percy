@@ -1,0 +1,4 @@
+*~
+*.swp
+/target
+nb-configuration.xml
