@@ -7,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Key {
+@Target(ElementType.TYPE)
+public @interface ColumnFamily {
 
-	boolean isReversed() default false;
+	Class[] dependency() default {};
 
 }
