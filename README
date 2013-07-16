@@ -1,0 +1,37 @@
+                   Welcome to Percy Project
+
+  Procy project is an framework especially designed for Cassandra.
+It's under developing right now. Use this framework, you can
+manipulate Cassandra in an extremely easy way.
+
+  Percy is based on Cassandra thrift API.
+
+  Make a connection:
+
+    conn = new Connection(ConnectionArgs.HOST, ConnectionArgs.PORT);
+    conn.open();
+
+  Create a keyspace:
+    conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
+
+  Use a keyspace:
+    conn.setKeyspace(ConnectionArgs.KEYSPACE);
+
+  Create a column family:
+    // Check sample code for Person class
+    conn.createColumnFamily(Person.class);
+
+  Destroy a column family:
+    conn.dropColumnFamily(Person.class);
+
+  Destroy a keyspace:
+    conn.dropKeyspace(ConnectionArgs.KEYSPACE);
+
+
+
+Roadmap:
+  Create and drop counter family
+  Insert and delete record into column family
+  Manipulate counter(increase, decrease)
+  Internal memory IO buffer(weak simulate for transaction support)
+  General DAO and GeneralListDao for batch operation.

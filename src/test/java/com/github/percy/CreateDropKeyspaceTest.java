@@ -23,11 +23,11 @@ public class CreateDropKeyspaceTest {
 
 	@Test
 	public void testCreateDropKeyspace() throws TTransportException, InvalidRequestException, SchemaDisagreementException, TException, UnsupportedEncodingException {
-//		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
+		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
 		conn.setKeyspace(ConnectionArgs.KEYSPACE);
 		System.out.println(conn.createColumnFamily(Person.class));
 		conn.dropColumnFamily(Person.class);
-//		conn.dropKeyspace(ConnectionArgs.KEYSPACE);
+		conn.dropKeyspace(ConnectionArgs.KEYSPACE);
 	}
 
 	@AfterClass
