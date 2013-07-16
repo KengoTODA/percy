@@ -12,7 +12,6 @@ public class Person {
 	private static final String SEX_MALE = "male";
 	private static final String SEX_FEMALE = "female";
 
-	/** machine generated, do not modified */
 	@Key
 	private PersonId personId;
 	@Column
@@ -75,19 +74,4 @@ public class Person {
 	public Person valudOf(PersonId personId, String name, String sex, Date birth) {
 		return new Person(personId, name, sex, birth);
 	}
-	/** end */
 }
-
-
-//CREATE KEYSPACE keyspace1 WITH
-//placement_strategy = 'SimpleStrategy'
-//AND strategy_options = {replication_factor:2};
-//
-//
-//CREATE COLUMN FAMILY cf1
-//WITH comparator = UTF8Type
-//AND key_validation_class=UTF8Type
-//AND column_metadata = [
-//{column_name: name, validation_class: UTF8Type}
-//{column_name: age, validation_class: UTF8Type}
-//];

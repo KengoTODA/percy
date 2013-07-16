@@ -1,6 +1,7 @@
 package com.github.percy;
 
 import com.github.percy.sample.Person;
+import com.github.percy.sample.Teacher;
 import java.io.UnsupportedEncodingException;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
@@ -23,10 +24,12 @@ public class CreateDropKeyspaceTest {
 
 	@Test
 	public void testCreateDropKeyspace() throws TTransportException, InvalidRequestException, SchemaDisagreementException, TException, UnsupportedEncodingException {
-		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
+//		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
 		conn.setKeyspace(ConnectionArgs.KEYSPACE);
-		System.out.println(conn.createColumnFamily(Person.class));
+//		conn.createColumnFamily(Person.class);
+//		conn.createColumnFamily(Teacher.class);
 		conn.dropColumnFamily(Person.class);
+		conn.dropColumnFamily(Teacher.class);
 		conn.dropKeyspace(ConnectionArgs.KEYSPACE);
 	}
 

@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ColumnDef;
+import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
@@ -31,13 +33,13 @@ public class Connection {
 
 	public static final String SIMPLE_STRATGY = "org.apache.cassandra.locator.SimpleStrategy";
 	public static final int ONE_REPLICATION = 1;
+
 	private final String host;
 	private final int port;
 	private TTransport tTransport;
 	private TProtocol tProtocol;
 	private Cassandra.Client client;
 	private String keyspace = null;
-
 
 	public Connection(String host, int port) {
 		this.host = host;
@@ -80,8 +82,12 @@ public class Connection {
 		return keyspace;
 	}
 
+	public Cassandra.Client getClient() {
+		return client;
+	}
+
 	public String createColumnFamily(Class cls) throws UnsupportedEncodingException, InvalidRequestException, SchemaDisagreementException, TException {
-		List<Field> columnFields = validateColumnFamilyClass(cls);
+		List<Field> columnFields = validateColumnFamilyClass(cls).right;
 		CfDef cfDef = new CfDef();
 		if (keyspace == null) {
 			throw new IllegalStateException("keyspace unset");
@@ -91,7 +97,7 @@ public class Connection {
 		cfDef.setComparator_type("UTF8Type");
 		cfDef.setKey_validation_class("UTF8Type");
 		for (Field f : columnFields) {
-			cfDef.addToColumn_metadata(new ColumnDef(ByteBuffer.wrap(f.getName().getBytes("UTF-8")), "UTF8Type"));
+			cfDef.addToColumn_metadata(new ColumnDef(ByteBuffer.wrap(f.getName().getBytes("UTF-8")), UTF8Type.class.getSimpleName()));
 		}
 		return client.system_add_column_family(cfDef);
 	}
@@ -106,27 +112,44 @@ public class Connection {
 	public void createCounterColumn(Class cls) {
 	}
 
-	private List<Field> validateColumnFamilyClass(Class cls) {
+	private Pair<Field, List<Field>> validateColumnFamilyClass(Class cls) {
 		if (!cls.isAnnotationPresent(ColumnFamily.class)) {
 			throw new IllegalArgumentException(cls.getName() + " : should be annotated with com.github.percy.annotations.ColumnFamily");
 		}
-		Field[] fields = cls.getDeclaredFields();
+
 		Field keyField = null;
 		List<Field> columnFields = new ArrayList<Field>();
-		int keyFieldCnt = 0;
-		for (Field f : fields) {
-			if (f.isAnnotationPresent(Key.class)) {
-				keyFieldCnt++;
-			} else if (f.isAnnotationPresent(Column.class)) {
-				columnFields.add(f);
+		Field[] fields = cls.getDeclaredFields();
+
+		if (cls.getSuperclass() == Object.class) {  // basic class
+			int keyFieldCnt = 0;
+			for (Field f : fields) {
+				if (f.isAnnotationPresent(Key.class)) {
+					keyFieldCnt++;
+				} else if (f.isAnnotationPresent(Column.class)) {
+					columnFields.add(f);
+				}
+			}
+			if (keyFieldCnt != 1) {
+				throw new IllegalArgumentException(cls.getName() + " : only 1 @Key can be defined in a column family. " + String.valueOf(keyFieldCnt) + " found.");
+			}
+			if (columnFields.isEmpty()) {
+				throw new IllegalArgumentException(cls.getName() + " : at least 1 @Column should be defined in a column family");
+			}
+		} else {  // derived class
+			Pair<Field, List<Field>> rs = validateColumnFamilyClass(cls.getSuperclass());
+			if (rs.left != null) {
+				keyField = rs.left;
+			}
+			columnFields = rs.right;
+			for (Field f : fields) {
+				if (f.isAnnotationPresent(Key.class)) {
+					throw new IllegalArgumentException(cls.getName() + " : already 1 @Key can be defined in a column family. Check base class.");
+				} else if (f.isAnnotationPresent(Column.class)) {
+					columnFields.add(f);
+				}
 			}
 		}
-		if (keyFieldCnt != 1) {
-			throw new IllegalArgumentException(cls.getName() + " : only 1 @Key can be defined in a column family. " + String.valueOf(keyFieldCnt) + " found.");
-		}
-		if (columnFields.isEmpty()) {
-			throw new IllegalArgumentException(cls.getName() + " : at least 1 @Column should be defined in a column family");
-		}
-		return columnFields;
+		return Pair.create(keyField, columnFields);
 	}
 }
