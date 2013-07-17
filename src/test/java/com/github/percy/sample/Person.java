@@ -9,18 +9,6 @@ import java.util.Date;
 @ColumnFamily
 public class Person {
 
-	private static final String SEX_MALE = "male";
-	private static final String SEX_FEMALE = "female";
-
-	@Key
-	private PersonId personId;
-	@Column
-	private String name;
-	@Column
-	private String sex;
-	@Column
-	private Date birth;
-
 	public static final Function<Person, PersonId> ID_FUNC = new Function<Person, PersonId>() {
 		@Override
 		public PersonId apply(Person input) {
@@ -28,7 +16,20 @@ public class Person {
 		}
 	};
 
-	Person(PersonId personId, String name, String sex, Date birth) {
+	public static final int SEX_MALE = 1;
+	public static final int SEX_FEMALE = 2;
+
+	@Key
+	private PersonId personId;
+	@Column
+	private String name;
+	@Column
+	private int sex;
+	@Column
+	private Date birth;
+
+
+	public Person(PersonId personId, String name, int sex, Date birth) {
 		this.personId = personId;
 		this.name = name;
 		this.sex = sex;
@@ -39,39 +40,32 @@ public class Person {
 		return personId;
 	}
 
-	public Person setPersonId(PersonId personId) {
+	public void setPersonId(PersonId personId) {
 		this.personId = personId;
-		return this;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Person setName(String name) {
+	public void setName(String name) {
 		this.name = name;
-		return this;
 	}
 
-	public String getSex() {
+	public int getSex() {
 		return sex;
 	}
 
-	public Person setSex(String sex) {
+	public void setSex(int sex) {
 		this.sex = sex;
-		return this;
 	}
 
 	public Date getBirth() {
 		return birth;
 	}
 
-	public Person setBirth(Date birth) {
+	public void setBirth(Date birth) {
 		this.birth = birth;
-		return this;
 	}
 
-	public Person valudOf(PersonId personId, String name, String sex, Date birth) {
-		return new Person(personId, name, sex, birth);
-	}
 }

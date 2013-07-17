@@ -3,8 +3,6 @@ package com.github.percy;
 import com.github.percy.annotations.Column;
 import com.github.percy.annotations.ColumnFamily;
 import com.github.percy.annotations.Key;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -16,7 +14,6 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ColumnDef;
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
@@ -96,8 +93,12 @@ public class Connection {
 		cfDef.setName(cls.getSimpleName());
 		cfDef.setComparator_type("UTF8Type");
 		cfDef.setKey_validation_class("UTF8Type");
+		cfDef.setDefault_validation_class("UTF8Type");
 		for (Field f : columnFields) {
-			cfDef.addToColumn_metadata(new ColumnDef(ByteBuffer.wrap(f.getName().getBytes("UTF-8")), UTF8Type.class.getSimpleName()));
+			System.out.println(f.getName() + " " + f.getDeclaringClass().getName());
+			cfDef.addToColumn_metadata(new ColumnDef(
+					ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
+					ValidationClassChooser.getValidationClassString(f.getType())));
 		}
 		return client.system_add_column_family(cfDef);
 	}

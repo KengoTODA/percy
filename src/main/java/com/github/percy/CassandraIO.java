@@ -26,7 +26,6 @@ public class CassandraIO {
 	}
 
 	public <T> void store(List<T> rows) {
-		Client client = conn.getClient();
 		Mutation mutation = new Mutation();
 	}
 
