@@ -2,7 +2,7 @@ package com.github.percy.annotations;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
 
-public @interface CounterColumn {
+public @interface CounterFamily {
 
 	ConsistencyLevel consistencyLevel() default ConsistencyLevel.QUORUM;
 

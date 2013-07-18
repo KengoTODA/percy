@@ -11,25 +11,13 @@ public class Teacher extends Person {
 	@Column
 	private String subject;
 
+	@Column
 	private String school;
 
-	public Teacher(PersonId personId, String name, String sex, Date birth, String subject) {
+	public Teacher(String subject, String school, PersonId personId, String name, int sex, Date birth) {
 		super(personId, name, sex, birth);
 		this.subject = subject;
-	}
-
-	public Teacher setSubject(String subject) {
-		this.subject = subject;
-		return this;
-	}
-
-	public String getSubject() {
-		return subject;
-	}
-
-	@Override
-	public Person valudOf(PersonId personId, String name, String sex, Date birth) {
-		return super.valudOf(personId, name, sex, birth);
+		this.school = school;
 	}
 
 }

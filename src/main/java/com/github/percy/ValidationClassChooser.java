@@ -31,11 +31,11 @@ public class ValidationClassChooser {
 	}
 
 	public static Class getValidationClass(Class cls) {
-		return vcMap.get(cls);
+		return vcMap.get(cls) == null ? BytesType.class : vcMap.get(cls);
 	}
 
 	public static String getValidationClassString(Class cls) {
-		return vcMap.get(cls).getSimpleName();
+		return getValidationClass(cls).getSimpleName();
 	}
 
 

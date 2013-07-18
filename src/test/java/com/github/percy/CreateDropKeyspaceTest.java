@@ -1,5 +1,6 @@
 package com.github.percy;
 
+import com.github.percy.sample.AB;
 import com.github.percy.sample.Person;
 import com.github.percy.sample.Teacher;
 import com.github.percy.sample.Whatever;
@@ -39,9 +40,10 @@ public class CreateDropKeyspaceTest {
 	public void testCreateDropKeyspace() throws TTransportException, InvalidRequestException, SchemaDisagreementException, TException, UnsupportedEncodingException, UnavailableException, TimedOutException {
 //		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
 		conn.setKeyspace(ConnectionArgs.KEYSPACE);
-		conn.createColumnFamily(Person.class);
+//		conn.createColumnFamily(Person.class);
 //		conn.createColumnFamily(Teacher.class);
 //		conn.createColumnFamily(Whatever.class);
+//		conn.createColumnFamily(AB.class);
 
 //		Cassandra.Client client = conn.getClient();
 //		mutation.setColumn_or_supercolumn(new Column().set)
@@ -60,6 +62,7 @@ public class CreateDropKeyspaceTest {
 
 //		conn.dropColumnFamily(Person.class);
 //		conn.dropColumnFamily(Teacher.class);
+//		conn.dropColumnFamily(Whatever.class);
 //		conn.dropKeyspace(ConnectionArgs.KEYSPACE);
 	}
 

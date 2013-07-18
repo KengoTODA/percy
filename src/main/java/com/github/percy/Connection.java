@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ColumnDef;
@@ -94,8 +93,8 @@ public class Connection {
 		cfDef.setComparator_type("UTF8Type");
 		cfDef.setKey_validation_class("UTF8Type");
 		cfDef.setDefault_validation_class("UTF8Type");
+		cfDef.setComparator_type("UTF8Type");
 		for (Field f : columnFields) {
-			System.out.println(f.getName() + " " + f.getDeclaringClass().getName());
 			cfDef.addToColumn_metadata(new ColumnDef(
 					ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
 					ValidationClassChooser.getValidationClassString(f.getType())));
@@ -120,36 +119,21 @@ public class Connection {
 
 		Field keyField = null;
 		List<Field> columnFields = new ArrayList<Field>();
-		Field[] fields = cls.getDeclaredFields();
+		List<Field> fields = Utils.getAllFields(cls);
+		int keyFieldCnt = 0;
 
-		if (cls.getSuperclass() == Object.class) {  // basic class
-			int keyFieldCnt = 0;
-			for (Field f : fields) {
-				if (f.isAnnotationPresent(Key.class)) {
-					keyFieldCnt++;
-				} else if (f.isAnnotationPresent(Column.class)) {
-					columnFields.add(f);
-				}
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(Key.class)) {
+				keyFieldCnt++;
+			} else if (f.isAnnotationPresent(Column.class)) {
+				columnFields.add(f);
 			}
-			if (keyFieldCnt != 1) {
-				throw new IllegalArgumentException(cls.getName() + " : only 1 @Key can be defined in a column family. " + String.valueOf(keyFieldCnt) + " found.");
-			}
-			if (columnFields.isEmpty()) {
-				throw new IllegalArgumentException(cls.getName() + " : at least 1 @Column should be defined in a column family");
-			}
-		} else {  // derived class
-			Pair<Field, List<Field>> rs = validateColumnFamilyClass(cls.getSuperclass());
-			if (rs.left != null) {
-				keyField = rs.left;
-			}
-			columnFields = rs.right;
-			for (Field f : fields) {
-				if (f.isAnnotationPresent(Key.class)) {
-					throw new IllegalArgumentException(cls.getName() + " : already 1 @Key can be defined in a column family. Check base class.");
-				} else if (f.isAnnotationPresent(Column.class)) {
-					columnFields.add(f);
-				}
-			}
+		}
+		if (keyFieldCnt != 1) {
+			throw new IllegalArgumentException(cls.getName() + " : only 1 @Key can be defined in a column family. " + String.valueOf(keyFieldCnt) + " found.");
+		}
+		if (columnFields.isEmpty()) {
+			throw new IllegalArgumentException(cls.getName() + " : at least 1 @Column should be defined in a column family");
 		}
 		return Pair.create(keyField, columnFields);
 	}
