@@ -97,7 +97,7 @@ public class Connection {
 		for (Field f : columnFields) {
 			cfDef.addToColumn_metadata(new ColumnDef(
 					ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
-					ValidationClassChooser.getValidationClassString(f.getType())));
+					Utils.getValidationClassString(f.getType())));
 		}
 		return client.system_add_column_family(cfDef);
 	}

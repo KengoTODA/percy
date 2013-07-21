@@ -22,7 +22,7 @@ public class TempRun {
 		AB a1 = new AB("key1", 1, "v1");
 		AB a2 = new AB("key2", 2, "v2");
 
-		new CassandraDao<AB>().store(Lists.newArrayList(a1, a2));
+		new CassandraIO().store(Lists.newArrayList(a1, a2));
 
 		System.out.println(new Integer(1).toString());
 	}
