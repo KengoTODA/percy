@@ -82,22 +82,27 @@ public class Connection {
 		return client;
 	}
 
-	public String createColumnFamily(Class cls) throws UnsupportedEncodingException, InvalidRequestException, SchemaDisagreementException, TException {
-		List<Field> columnFields = validateColumnFamilyClass(cls).right;
+	public String createColumnFamily(Class cls) throws InvalidRequestException, SchemaDisagreementException, TException {
+		Pair<Field, List<Field>> kvField = Utils.getKeyValueFields(cls);
+		Field keyField = kvField.left;
+		List<Field> valueFields = kvField.right;
 		CfDef cfDef = new CfDef();
 		if (keyspace == null) {
 			throw new IllegalStateException("keyspace unset");
 		}
 		cfDef.setKeyspace(keyspace);
 		cfDef.setName(cls.getSimpleName());
-		cfDef.setComparator_type("UTF8Type");
+		cfDef.setComparator_type(Utils.getValidationClassString(keyField.getType()));
 		cfDef.setKey_validation_class("UTF8Type");
 		cfDef.setDefault_validation_class("UTF8Type");
-		cfDef.setComparator_type("UTF8Type");
-		for (Field f : columnFields) {
-			cfDef.addToColumn_metadata(new ColumnDef(
-					ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
-					Utils.getValidationClassString(f.getType())));
+		for (Field f : valueFields) {
+			try {
+				cfDef.addToColumn_metadata(new ColumnDef(
+						ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
+						Utils.getValidationClassString(f.getType())));
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException("Bug in source code. " + e.getMessage());
+			}
 		}
 		return client.system_add_column_family(cfDef);
 	}
@@ -112,29 +117,7 @@ public class Connection {
 	public void createCounterColumn(Class cls) {
 	}
 
-	private Pair<Field, List<Field>> validateColumnFamilyClass(Class cls) {
-		if (!cls.isAnnotationPresent(ColumnFamily.class)) {
-			throw new IllegalArgumentException(cls.getName() + " : should be annotated with com.github.percy.annotations.ColumnFamily");
-		}
-
-		Field keyField = null;
-		List<Field> columnFields = new ArrayList<Field>();
-		List<Field> fields = Utils.getAllFields(cls);
-		int keyFieldCnt = 0;
-
-		for (Field f : fields) {
-			if (f.isAnnotationPresent(Key.class)) {
-				keyFieldCnt++;
-			} else if (f.isAnnotationPresent(Column.class)) {
-				columnFields.add(f);
-			}
-		}
-		if (keyFieldCnt != 1) {
-			throw new IllegalArgumentException(cls.getName() + " : only 1 @Key can be defined in a column family. " + String.valueOf(keyFieldCnt) + " found.");
-		}
-		if (columnFields.isEmpty()) {
-			throw new IllegalArgumentException(cls.getName() + " : at least 1 @Column should be defined in a column family");
-		}
-		return Pair.create(keyField, columnFields);
+	public void dropCounterColumn(Class cls) {
 	}
+
 }
