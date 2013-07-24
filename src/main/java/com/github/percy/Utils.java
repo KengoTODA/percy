@@ -54,10 +54,6 @@ public class Utils {
 		return vcMap.get(cls) == null ? BytesType.class : vcMap.get(cls);
 	}
 
-	public static String getValidationClassString(Class cls) {
-		return getValidationClass(cls).getSimpleName();
-	}
-
 	public static List<Field> getAllFields(final Class cls) {
 		if (cls.getSuperclass() == Object.class) {
 			return Arrays.asList(cls.getDeclaredFields());
@@ -86,7 +82,8 @@ public class Utils {
 	
 	public static ByteBuffer getByteBufffer(Object obj) {
 		if (obj.getClass() == Integer.class) {
-			return ByteBuffer.allocate(4).putInt(((Integer) obj).intValue());
+			System.out.println("Integer");
+			return ByteBuffer.allocate(4).putInt(((Integer)obj).intValue());
 		} else if (obj.getClass() == Long.class) {
 			return ByteBuffer.allocate(8).putLong(((Long)obj).longValue());
 		} else if (obj.getClass() == Float.class) {
@@ -104,12 +101,19 @@ public class Utils {
 			return ByteBuffer.allocate(1).put(((Byte)obj).byteValue());
 		} else if (obj.getClass() == Date.class) {
 			return ByteBuffer.allocate(8).putLong(((Date)obj).getTime());
+		} else if (obj.getClass() == String.class) {
+			try {
+				return ByteBuffer.wrap(((String)obj).getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException("Bug in source code.\n" + e.getMessage());
+			}
 		}
 		throw new IllegalArgumentException("Unsupported object type.");
 		// TODO : get byte buffer by triggering specific methods
 	}
 
 	public static ByteBuffer getByteBufffer(int i) {
+		System.out.println("int");
 		return ByteBuffer.allocate(4).putInt(i);
 	}
 
@@ -140,14 +144,6 @@ public class Utils {
 		return ByteBuffer.allocate(1).put(b);
 	}
 
-	public static ByteBuffer getByteBufffer(String s) {
-		try {
-			return ByteBuffer.wrap(s.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Bug in source code.\n" + e.getMessage());
-		}
-	}
-
 	private static Pair<Field, List<Field>> validateColumnFamilyClass(Class cls) {
 		if (!cls.isAnnotationPresent(ColumnFamily.class)) {
 			throw new IllegalArgumentException(cls.getName() + " : should be annotated with com.github.percy.annotations.ColumnFamily");
@@ -161,6 +157,7 @@ public class Utils {
 		for (Field f : fields) {
 			if (f.isAnnotationPresent(Key.class)) {
 				keyFieldCnt++;
+				keyField = f;
 			} else if (f.isAnnotationPresent(Column.class)) {
 				columnFields.add(f);
 			}

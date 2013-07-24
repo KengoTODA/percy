@@ -1,8 +1,7 @@
 package com.github.percy;
 
-import com.github.percy.annotations.Column;
-import com.github.percy.annotations.ColumnFamily;
-import com.github.percy.annotations.Key;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -10,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ColumnDef;
@@ -42,15 +42,17 @@ public class Connection {
 		this.port = port;
 	}
 
-	public void open() throws TTransportException {
+	public Connection open() throws TTransportException {
 		tTransport = new TFramedTransport(new TSocket(host, port));
 		tProtocol = new TBinaryProtocol(tTransport);
 		client = new Cassandra.Client(tProtocol);
 		tTransport.open();
+		return this;
 	}
 
-	public void close() {
+	public Connection close() {
 		tTransport.close();
+		return this;
 	}
 
 	public String createKeyspace(String keyspace, String strategyClass, int replicationFactor) throws InvalidRequestException, SchemaDisagreementException, TException {
@@ -92,14 +94,14 @@ public class Connection {
 		}
 		cfDef.setKeyspace(keyspace);
 		cfDef.setName(cls.getSimpleName());
-		cfDef.setComparator_type(Utils.getValidationClassString(keyField.getType()));
-		cfDef.setKey_validation_class("UTF8Type");
-		cfDef.setDefault_validation_class("UTF8Type");
+		cfDef.setComparator_type("UTF8Type");           // comparator for column name
+		cfDef.setKey_validation_class(Utils.getValidationClass(keyField.getType()).getSimpleName());      // validator for key data
+		cfDef.setDefault_validation_class("BytesType");  // validator for column data
 		for (Field f : valueFields) {
 			try {
 				cfDef.addToColumn_metadata(new ColumnDef(
 						ByteBuffer.wrap(f.getName().getBytes("UTF-8")),
-						Utils.getValidationClassString(f.getType())));
+						Utils.getValidationClass(f.getType()).getSimpleName()));
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException("Bug in source code. " + e.getMessage());
 			}

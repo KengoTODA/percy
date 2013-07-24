@@ -25,23 +25,7 @@ public class CreateDropKeyspaceTest {
 	@Test
 	public void testCreateDropKeyspace() throws TTransportException, InvalidRequestException, SchemaDisagreementException, TException, UnsupportedEncodingException, UnavailableException, TimedOutException {
 //		conn.createKeyspace(ConnectionArgs.KEYSPACE, Connection.SIMPLE_STRATGY, Connection.ONE_REPLICATION);
-		conn.setKeyspace(ConnectionArgs.KEYSPACE);
-
-//		Cassandra.Client client = conn.getClient();
-//		mutation.setColumn_or_supercolumn(new Column().set)
-//		List<Mutation> mutations = Lists.newArrayList();
-//		Column column = new Column().setName(ByteBuffer.wrap("name".getBytes("UTF-8")))
-//									.setValue(ByteBuffer.wrap("name value".getBytes("UTF-8")))
-//									.setTimestamp(System.currentTimeMillis());
-//		Mutation mutation = new Mutation();
-//		mutation.setColumn_or_supercolumn(new ColumnOrSuperColumn().setColumn(column));
-//		mutations.add(mutation);
-//		Map<String,List<Mutation>> columnFamilyValues = new HashMap<String,List<Mutation>>();
-//		columnFamilyValues.put("Person", mutations);
-//		Map<ByteBuffer, Map<String, List<Mutation>>> rowDefinition = new HashMap<ByteBuffer, Map<String,List<Mutation>>>();
-//		rowDefinition.put(ByteBuffer.wrap(("key1").getBytes("UTF8")), columnFamilyValues);
-//		client.batch_mutate(rowDefinition, ConsistencyLevel.ONE);
-
+//		conn.setKeyspace(ConnectionArgs.KEYSPACE);
 //		conn.dropKeyspace(ConnectionArgs.KEYSPACE);
 	}
 

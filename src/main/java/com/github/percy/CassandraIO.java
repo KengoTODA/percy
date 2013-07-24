@@ -11,10 +11,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.TreeMap;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.TimedOutException;
+import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.cassandra.utils.Pair;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +28,7 @@ public class CassandraIO {
 	Logger logger = LoggerFactory.getLogger(CassandraIO.class);
 	
 	Connection conn = null;
-	Map<ByteBuffer, Map<String, List<Mutation>>> rowDefs = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+	Map<ByteBuffer, Map<String, List<Mutation>>> rowDefs = new TreeMap<ByteBuffer, Map<String, List<Mutation>>>();
 
 	public CassandraIO() {
 	}
@@ -41,9 +46,9 @@ public class CassandraIO {
 		return conn;
 	}
 
-	public <T> void store(List<T> rows) {
+	public <T> CassandraIO store(List<T> rows) {
 		if (rows.isEmpty()) {
-			return;
+			return this;
 		}
 		Class cls = rows.get(0).getClass();
 		Pair<Field, List<Field>> kvField = Utils.getKeyValueFields(cls);
@@ -59,6 +64,7 @@ public class CassandraIO {
 			f.setAccessible(true);
 		}
 		boolean keyAccessFlag = keyField.isAccessible();
+		keyField.setAccessible(true);
 		// key          cf           column-name-value
 		// long timeStamp = System.currentTimeMillis();
 		for (T row : rows) {
@@ -115,7 +121,7 @@ public class CassandraIO {
 					org.apache.cassandra.thrift.Column column;
 					column = new org.apache.cassandra.thrift.Column()
 									.setName(ByteBuffer.wrap(f.getName().getBytes("UTF-8")))
-									.setValue(valueBuffer).setTimestamp(0);
+									.setValue(valueBuffer).setTimestamp(System.currentTimeMillis());
 					mutations.add(new Mutation().setColumn_or_supercolumn(new ColumnOrSuperColumn().setColumn(column)));
 				} catch (IllegalArgumentException e) {
 					logger.error("Please check type of the @Column fields.");
@@ -128,14 +134,23 @@ public class CassandraIO {
 					throw new RuntimeException(e);
 				}
 			} // end for valueFields
+
 			if (rowDefs.containsKey(keyBuffer)) {
 				if (rowDefs.get(keyBuffer).containsKey(cls.getSimpleName())) {
 					rowDefs.get(keyBuffer).put(cls.getSimpleName(), mutations);
+					Preconditions.checkNotNull(rowDefs.get(keyBuffer).get(cls.getSimpleName()));
 				} else {
-					
+					Map<String, List<Mutation>> tmpMap = new HashMap<String, List<Mutation>>();
+					tmpMap.put(cls.getSimpleName(), mutations);
+					rowDefs.put(keyBuffer, tmpMap);
+					Preconditions.checkNotNull(rowDefs.get(keyBuffer).get(cls.getSimpleName()));
 				}
 			} else {
-				rowDefs.put(keyBuffer, (Map<String, List<Mutation>>)(new HashMap<String, List<Mutation>>().put(cls.getSimpleName(), mutations)));
+				Map<String, List<Mutation>> tmp = new HashMap<String, List<Mutation>>();
+				tmp.put(cls.getSimpleName(), mutations);
+				rowDefs.put(keyBuffer, tmp);
+				Preconditions.checkNotNull(rowDefs.get(keyBuffer));
+				Preconditions.checkNotNull(rowDefs.get(keyBuffer).get(cls.getSimpleName()));
 			}
 		} // end for <T> rows
 		// recover access privileges
@@ -143,14 +158,15 @@ public class CassandraIO {
 			valueFields.get(i).setAccessible(accessFlags.get(i));
 		}
 		keyField.setAccessible(keyAccessFlag);
+		return this;
 	}
 
-	public <T> void store(T row) {
-		store(Arrays.asList(row));
+	public <T> CassandraIO store(T row) {
+		return store(Arrays.asList(row));
 	}
 
-	public <T> void store(T... elems) {
-		store(Lists.newArrayList(elems));
+	public <T> CassandraIO store(T... elems) {
+		return store(Lists.newArrayList(elems));
 	}
 
 	public <T, K> T load(K key) {
@@ -165,8 +181,26 @@ public class CassandraIO {
 		rowDefs.clear();
 	}
 
-	public void flush() {
-		
+	public void flush() throws InvalidRequestException, UnavailableException, TimedOutException, TException {
+		conn.getClient().batch_mutate(rowDefs, ConsistencyLevel.QUORUM);
+		rowDefs.clear();
+	}
+
+	public void print() {
+		for (Map.Entry<ByteBuffer, Map<String, List<Mutation>>> rowEnts : rowDefs.entrySet()) {
+			System.out.println(new String(rowEnts.getKey().array()));
+			Map<String, List<Mutation>> ks = rowDefs.get(rowEnts.getKey());
+//			System.out.println(ks);
+			for (Map.Entry<String, List<Mutation>> ksEnts : ks.entrySet()) {
+				System.out.println("\t" + ksEnts.getKey());
+				for (Mutation m : ksEnts.getValue()) {
+					System.out.println("\t\t" + 
+						new String(m.getColumn_or_supercolumn().getColumn().bufferForName().array()));
+					System.out.println("\t\t" +
+						m.getColumn_or_supercolumn().getColumn().bufferForValue().getInt(0));
+				}
+			}
+		}
 	}
 
 }
