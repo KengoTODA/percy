@@ -20,19 +20,21 @@ public class CassandraIOTest {
 
 	@BeforeClass
 	public static void setup() throws TTransportException, InvalidRequestException, SchemaDisagreementException, TException {
-		conn = new Connection(ConnectionArgs.HOST, ConnectionArgs.PORT).open().setKeyspace(ConnectionArgs.KEYSPACE);
+//		conn = new Connection(ConnectionArgs.HOST, ConnectionArgs.PORT).open().setKeyspace(ConnectionArgs.KEYSPACE);
 	}
 
 	@Test
 	public void test1() throws InvalidRequestException, InvalidRequestException, SchemaDisagreementException, SchemaDisagreementException, TException, UnavailableException, TimedOutException {
 //		conn.createColumnFamily(IntCF.class);
-		new CassandraIO(conn).store(new IntCF("k1", 1, 10), new IntCF("k2", 2, 20)).flush();
+		DataBarn dataBarn = new DataBarn();
+		dataBarn.store(new IntCF("k1", 1, 10), new IntCF("k2", 2, 20));
+		System.out.println(dataBarn);
 //		conn.dropColumnFamily(IntCF.class);
 	}
 
 	@AfterClass
 	public static void cleanup() {
-		conn.close();
+//		conn.close();
 	}
 
 	@ColumnFamily
